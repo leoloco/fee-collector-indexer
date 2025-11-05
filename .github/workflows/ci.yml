@@ -39,7 +39,6 @@ jobs:
       - name: Run tests
         run: npm test
         env:
-          # Configuration for integration tests (unit tests set their own env in beforeEach)
           MONGODB_URI: mongodb://localhost:27017/test
           ENABLED_CHAINS: polygon
           POLYGON_RPC: ${{ secrets.POLYGON_RPC }}
