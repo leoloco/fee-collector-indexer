@@ -1,0 +1,7 @@
+{
+  "chainId": 137,
+  "contractAddress": "0xbD6C7B0d2f68c2b7805d88388319cfB6EcB50eA9",
+  "startBlock": 77000000,
+  "chunkSize": 10,
+  "finalityDepth": 50
+}
