@@ -39,7 +39,17 @@ npm install
 You can run MongoDB locally using Docker:
 
 ```bash
+# First time: Create and start the container
 docker run -d -p 27017:27017 --name fee-collector-mongodb mongo:latest
+
+# Subsequent times: Start the existing container
+docker start fee-collector-mongodb
+
+# To stop the container
+docker stop fee-collector-mongodb
+
+# To remove the container (if needed)
+docker rm fee-collector-mongodb
 ```
 
 Or use a MongoDB Atlas instance or any other MongoDB deployment.
@@ -52,25 +62,7 @@ Copy the example environment file and edit it with your configuration:
 cp .env.example .env
 ```
 
-Edit `.env` with your settings:
-
-```env
-# MongoDB connection URI
-MONGODB_URI=mongodb://localhost:27017/fee-collector
-
-# Enabled chains (comma-separated)
-ENABLED_CHAINS=polygon
-
-# RPC endpoints for each chain
-POLYGON_RPC=https://polygon-rpc.com/your-api-key
-
-# API configuration
-PORT=3000
-API_ENABLED=true
-
-# Logging level (error, warn, info, debug)
-LOG_LEVEL=info
-```
+Edit `.env` with your desired settings. 
 
 **Important**: Each enabled chain requires:
 - An RPC URL environment variable: `<CHAINNAME>_RPC`
@@ -104,8 +96,6 @@ This runs both unit and integration tests using mongodb-memory-server (no extern
 
 ## Running the Application
 
-### Development Mode
-
 Build and run the indexer:
 
 ```bash
@@ -121,15 +111,8 @@ The indexer will:
 2. Initialize indexers for all enabled chains
 3. Start processing blocks from the configured start block (or resume from last processed block)
 4. Run continuously, polling for new blocks every 10 seconds
+5. Start the API server (if `API_ENABLED=true`)
 
-### Production Mode
-
-For production deployments:
-
-1. Ensure all environment variables are properly configured
-2. Set `LOG_LEVEL=error` to reduce log volume
-3. Use a production MongoDB instance with proper backups
-4. Monitor the `[CIRCUIT_BREAKER_ALERT]` logs for RPC failures requiring manual intervention
 
 ### Graceful Shutdown
 
@@ -144,6 +127,14 @@ This will:
 - Stop all running indexers
 - Disconnect from MongoDB cleanly
 - Save the last processed block state
+
+## Using the API
+
+Query events by integrator address:
+
+```bash
+curl -s "http://localhost:3000/api/events?integrator=0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE" | jq
+```
 
 ## Monitoring
 
@@ -205,6 +196,7 @@ Set the `LOG_LEVEL` environment variable to control verbosity.
 - **EventStorage**: Stores events in MongoDB with deduplication
 - **IndexerOrchestrator**: Orchestrates the indexing process with retry logic and state management
 - **Database Models**: Type-safe Typegoose models for events and indexer state
+- **API**: REST endpoint to query events by integrator address 
 
 ## Troubleshooting
 

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 import * as fs from 'fs'
 import * as path from 'path'
+import { ethers } from 'ethers'
 
 // Load environment variables from .env file
 dotenv.config()
@@ -81,10 +82,10 @@ function requireBoolEnv(key: string): boolean {
 }
 
 /**
- * Validates Ethereum address format (basic validation)
+ * Validates Ethereum address format using ethers.js
  */
 function validateAddress(address: string, fieldName: string): string {
-  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+  if (!ethers.utils.isAddress(address)) {
     throw new Error(
       `${fieldName} must be a valid Ethereum address (0x + 40 hex chars), got: ${address}`
     )

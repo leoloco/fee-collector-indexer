@@ -99,7 +99,6 @@ export class IndexerOrchestrator {
 
               success = true
               processedUpTo = toBlock + 1
-              fromBlock = processedUpTo
             } catch (error) {
               retryCount++
               logger.error(
@@ -121,9 +120,11 @@ export class IndexerOrchestrator {
             )
             // Skip to next chunk
             processedUpTo = toBlock + 1
-            fromBlock = processedUpTo
           }
         }
+
+        // Update fromBlock after processing all chunks in this iteration
+        fromBlock = processedUpTo
       } catch (error) {
         logger.error(
           'Error in indexer loop:',

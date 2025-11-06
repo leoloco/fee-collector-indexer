@@ -3,6 +3,7 @@ import { getConfig, getChainConfig } from './config'
 import { EventFetcher } from './services/EventFetcher'
 import { EventStorage } from './services/EventStorage'
 import { IndexerOrchestrator } from './services/IndexerOrchestrator'
+import { startServer } from './api/server'
 import { logger } from './utils/logger'
 
 /**
@@ -19,6 +20,13 @@ async function main() {
 
     // Connect to MongoDB
     await connectDB()
+
+    // Start API server if enabled
+    if (config.api.enabled) {
+      startServer(config.api.port)
+    } else {
+      logger.info('API server is disabled')
+    }
 
     // Create storage instance (shared across all chains)
     const storage = new EventStorage()

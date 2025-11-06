@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { connectDB, disconnectDB } from '../../src/db'
-import { getConfig, getChainConfig } from '../../src/config'
+import { getConfig, getChainConfig, resetConfig } from '../../src/config'
 import { EventStorage } from '../../src/services/EventStorage'
 import { EventFetcher } from '../../src/services/EventFetcher'
 import { IndexerOrchestrator } from '../../src/services/IndexerOrchestrator'
@@ -25,6 +25,9 @@ describe('Main Application Integration Tests', () => {
       API_ENABLED: 'false',
       LOG_LEVEL: 'error', // Suppress logs during tests
     }
+
+    // Reset config to pick up new environment variables
+    resetConfig()
   })
 
   afterAll(async () => {

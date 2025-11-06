@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { MongoMemoryServer } from 'mongodb-memory-server'
 import { connectDB, disconnectDB } from '../../src/db'
 import { logger } from '../../src/utils/logger'
 
@@ -11,15 +12,29 @@ jest.mock('../../src/utils/logger', () => ({
   },
 }))
 
-// Mock the config
+let mongoServer: MongoMemoryServer
+let mongoUri: string
+
+// Mock the config with in-memory MongoDB URI
 jest.mock('../../src/config', () => ({
   getConfig: jest.fn(() => ({
-    mongodbUri: 'mongodb://localhost:27017/test-db',
+    mongodbUri: mongoUri,
   })),
 }))
 
 describe('Database Connection', () => {
   const originalEnv = process.env
+
+  beforeAll(async () => {
+    // Start in-memory MongoDB server
+    mongoServer = await MongoMemoryServer.create()
+    mongoUri = mongoServer.getUri()
+  })
+
+  afterAll(async () => {
+    // Stop in-memory MongoDB server
+    await mongoServer.stop()
+  })
 
   beforeEach(() => {
     jest.clearAllMocks()
