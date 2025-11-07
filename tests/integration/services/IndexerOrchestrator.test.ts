@@ -167,8 +167,8 @@ describe('IndexerOrchestrator', () => {
 
     it('should apply finality depth when endBlock is near chain tip', async () => {
       // When endBlock is near the current block, finality depth should be applied
-      const currentBlock = await fetcher.provider.getBlockNumber()
-      const nearTipBlock = currentBlock - 10 // Very recent
+      const currentBlockBefore = await fetcher.provider.getBlockNumber()
+      const nearTipBlock = currentBlockBefore - 10 // Very recent
 
       orchestrator = new IndexerOrchestrator(
         {
@@ -187,9 +187,13 @@ describe('IndexerOrchestrator', () => {
       await orchestrator.start()
 
       const lastBlock = await storage.getLastProcessedBlock(137)
+      // Fetch current block again after indexer completes (blockchain may have moved forward)
+      const currentBlockAfter = await fetcher.provider.getBlockNumber()
 
       // Should have processed up to currentBlock - finalityDepth (not endBlock)
-      expect(lastBlock).toBeLessThanOrEqual(currentBlock - 50)
+      // Use the maximum of the two currentBlock values to account for blockchain progression
+      const maxCurrentBlock = Math.max(currentBlockBefore, currentBlockAfter)
+      expect(lastBlock).toBeLessThanOrEqual(maxCurrentBlock - 50)
     }, 60000)
   })
 

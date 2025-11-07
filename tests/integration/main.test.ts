@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 import { MongoMemoryServer } from 'mongodb-memory-server'
-import { connectDB, disconnectDB } from '../../src/db'
+import { disconnectDB } from '../../src/db'
 import { getConfig, getChainConfig, resetConfig } from '../../src/config'
 import { EventStorage } from '../../src/services/EventStorage'
 import { EventFetcher } from '../../src/services/EventFetcher'
@@ -8,17 +8,22 @@ import { IndexerOrchestrator } from '../../src/services/IndexerOrchestrator'
 
 describe('Main Application Integration Tests', () => {
   let mongoServer: MongoMemoryServer
+  let mongoUri: string
   const originalEnv = process.env
 
   beforeAll(async () => {
     // Start in-memory MongoDB
     mongoServer = await MongoMemoryServer.create()
-    const mongoUri = mongoServer.getUri()
+    mongoUri = mongoServer.getUri()
 
     // Set up test environment with Polygon chain
     process.env = {
       ...originalEnv,
-      MONGODB_URI: mongoUri,
+      MONGO_ROOT_USERNAME: 'testuser',
+      MONGO_ROOT_PASSWORD: 'testpass',
+      MONGO_HOST: 'localhost',
+      MONGO_PORT: '27017',
+      MONGO_DATABASE: 'test',
       ENABLED_CHAINS: 'polygon',
       POLYGON_RPC: originalEnv.POLYGON_RPC || 'https://polygon-rpc.com',
       PORT: '3000',
@@ -44,13 +49,14 @@ describe('Main Application Integration Tests', () => {
   })
 
   it('should connect to MongoDB successfully', async () => {
-    await connectDB()
+    // Override connectDB to use in-memory MongoDB
+    await mongoose.connect(mongoUri)
 
     expect(mongoose.connection.readyState).toBe(1) // 1 = connected
   })
 
   it('should disconnect from MongoDB successfully', async () => {
-    await connectDB()
+    await mongoose.connect(mongoUri)
     expect(mongoose.connection.readyState).toBe(1)
 
     await disconnectDB()
@@ -69,7 +75,7 @@ describe('Main Application Integration Tests', () => {
   })
 
   it('should create EventStorage instance', async () => {
-    await connectDB()
+    await mongoose.connect(mongoUri)
 
     const storage = new EventStorage()
 
@@ -93,7 +99,7 @@ describe('Main Application Integration Tests', () => {
   })
 
   it('should create IndexerOrchestrator instance', async () => {
-    await connectDB()
+    await mongoose.connect(mongoUri)
 
     const chainConfig = getChainConfig('polygon')
     const fetcher = new EventFetcher({
@@ -122,7 +128,7 @@ describe('Main Application Integration Tests', () => {
   })
 
   it('should initialize all components for multi-chain setup', async () => {
-    await connectDB()
+    await mongoose.connect(mongoUri)
 
     const config = getConfig()
     const storage = new EventStorage()

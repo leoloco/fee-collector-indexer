@@ -262,7 +262,7 @@ When the indexer starts (via Docker or local deployment), it will:
 
 ```
 /src
-  /api             # API 
+  /api             # Express API server, routes, and middleware
   /config          # Configuration loading and validation
   /models          # Typegoose MongoDB models
   /services        # Business logic (EventFetcher, EventStorage, IndexerOrchestrator)
@@ -272,12 +272,12 @@ When the indexer starts (via Docker or local deployment), it will:
   main.ts          # Main entry point
 
 /tests
+  /integration     # Integration tests with real blockchain and in-memory MongoDB
   /unit            # Unit tests with mocked dependencies
-  /integration     # Integration tests with real blockchain/DB
-  /setup           # Test configuration and setup utilities
+  /setup           # Test database setup utilities
 
 /config
-  /<chainname>     # Chain-specific configuration files
+  /<chainname>     # Chain-specific configuration files (e.g., /polygon)
 ```
 
 ### Key Components
