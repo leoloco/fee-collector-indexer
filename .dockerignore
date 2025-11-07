@@ -1,0 +1,49 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Build output (will be generated during Docker build)
+dist
+
+# Tests
+tests
+*.test.ts
+jest.config.js
+coverage
+
+# Git
+.git
+.gitignore
+.github
+
+# Environment files (use docker-compose env vars instead)
+.env
+.env.*
+!.env.example
+
+# Documentation
+README.md
+SPECIFICATION.md
+IMPLEMENTATION_PLAN.md
+CLAUDE.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Linting and formatting
+.eslintrc
+.prettierrc
+.prettierignore
+eslint.config.js
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7-jammy
+    container_name: fee-collector-mongodb
+    restart: unless-stopped
+    environment:
+      # Credentials sourced from .env file - NEVER commit actual credentials
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: fee-collector
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - fee-collector-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/fee-collector --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Fee Collector Indexer Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fee-collector-indexer
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      # MongoDB Configuration - components from .env (app constructs URI)
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_DATABASE: fee-collector
+
+      # Chain Configuration
+      ENABLED_CHAINS: ${ENABLED_CHAINS:-polygon}
+
+      # RPC URLs - sourced from .env file
+      POLYGON_RPC: ${POLYGON_RPC}
+
+      # API Configuration
+      PORT: ${PORT:-3000}
+      API_ENABLED: ${API_ENABLED:-true}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${PORT:-3000}:3000"
+    networks:
+      - fee-collector-network
+    volumes:
+      # Mount config directory for easy chain configuration updates
+      - ./config:/app/config:ro
+
+networks:
+  fee-collector-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local

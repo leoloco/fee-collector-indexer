@@ -53,10 +53,9 @@ async function main() {
         {
           chainId: chainConfig.chainId,
           startBlock: chainConfig.startBlock,
-          // No endBlock - run in continuous mode
           chunkSize: chainConfig.chunkSize,
           finalityDepth: chainConfig.finalityDepth,
-          pollInterval: 10000, // 10 seconds between polls
+          pollInterval: 10000, // 10 seconds between polls (only applied at chain tip)
         },
         fetcher,
         storage

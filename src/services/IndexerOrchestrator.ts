@@ -55,8 +55,17 @@ export class IndexerOrchestrator {
         // Determine the target block: either endBlock (if specified) or current block with finality
         let targetBlock: number
         if (this.config.endBlock !== undefined) {
-          // If endBlock is specified, use it directly (no finality depth needed for historical blocks)
-          targetBlock = this.config.endBlock
+          // Cap endBlock at current block (can't index blocks that don't exist yet)
+          const cappedEndBlock = Math.min(this.config.endBlock, currentBlock)
+          // Only apply finality depth if we're near the chain tip
+          // For historical blocks, use endBlock directly (no reorg risk for old blocks)
+          if (cappedEndBlock >= currentBlock - this.config.finalityDepth) {
+            // Near the tip - apply finality depth for reorg protection
+            targetBlock = currentBlock - this.config.finalityDepth
+          } else {
+            // Historical sync - use endBlock directly
+            targetBlock = cappedEndBlock
+          }
         } else {
           // For continuous mode, apply finality depth for reorg protection
           targetBlock = currentBlock - this.config.finalityDepth

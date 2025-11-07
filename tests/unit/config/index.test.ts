@@ -8,7 +8,11 @@ describe('Configuration Loader', () => {
     jest.resetModules()
     // Start with a clean environment with required minimum env vars
     process.env = {
-      MONGODB_URI: 'mongodb://localhost:27017/test',
+      MONGO_ROOT_USERNAME: 'testuser',
+      MONGO_ROOT_PASSWORD: 'testpass',
+      MONGO_HOST: 'localhost',
+      MONGO_PORT: '27017',
+      MONGO_DATABASE: 'test',
       ENABLED_CHAINS: 'polygon,mockChain',
       POLYGON_RPC: 'https://polygon-rpc.com',
       MOCKCHAIN_RPC: 'http://localhost:8545',
@@ -28,7 +32,9 @@ describe('Configuration Loader', () => {
     it('should load valid configuration', () => {
       const config = loadConfig()
 
-      expect(config.mongodbUri).toBe('mongodb://localhost:27017/test')
+      expect(config.mongodbUri).toBe(
+        'mongodb://testuser:testpass@localhost:27017/test?authSource=admin'
+      )
       expect(config.enabledChains).toEqual(['polygon', 'mockChain'])
 
       // Chain config comes from JSON file
@@ -60,10 +66,31 @@ describe('Configuration Loader', () => {
   })
 
   describe('Required Fields Validation', () => {
-    it('should throw error when MONGODB_URI is missing', () => {
-      delete process.env.MONGODB_URI
+    it('should throw error when MONGO_ROOT_USERNAME is missing', () => {
+      delete process.env.MONGO_ROOT_USERNAME
 
-      expect(() => loadConfig()).toThrow('Missing required environment variable: MONGODB_URI')
+      expect(() => loadConfig()).toThrow(
+        'Missing required environment variable: MONGO_ROOT_USERNAME'
+      )
+    })
+
+    it('should throw error when MONGO_ROOT_PASSWORD is missing', () => {
+      delete process.env.MONGO_ROOT_PASSWORD
+
+      expect(() => loadConfig()).toThrow(
+        'Missing required environment variable: MONGO_ROOT_PASSWORD'
+      )
+    })
+
+    it('should use default values for MONGO_HOST, MONGO_PORT, and MONGO_DATABASE', () => {
+      delete process.env.MONGO_HOST
+      delete process.env.MONGO_PORT
+      delete process.env.MONGO_DATABASE
+
+      const config = loadConfig()
+      expect(config.mongodbUri).toBe(
+        'mongodb://testuser:testpass@localhost:27017/fee-collector?authSource=admin'
+      )
     })
 
     it('should throw error when ENABLED_CHAINS is missing', () => {

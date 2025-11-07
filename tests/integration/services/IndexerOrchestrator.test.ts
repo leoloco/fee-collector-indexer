@@ -112,15 +112,15 @@ describe('IndexerOrchestrator', () => {
   })
 
   describe('finality depth', () => {
-    it('should not apply finality depth when endBlock is specified', async () => {
-      // When using endBlock, we're processing historical data, so finality depth is ignored
+    it('should not apply finality depth for historical endBlock', async () => {
+      // When endBlock is far in the past, finality depth is not applied
       orchestrator = new IndexerOrchestrator(
         {
           chainId: 137,
           startBlock: 77000000,
           endBlock: 77000100,
           chunkSize: 10, // Must respect Alchemy's 10 block limit
-          finalityDepth: 50, // Should be ignored since endBlock is specified
+          finalityDepth: 50, // Should be ignored since endBlock is historical
           pollInterval: 100,
         },
         fetcher,
@@ -132,8 +132,64 @@ describe('IndexerOrchestrator', () => {
 
       const lastBlock = await storage.getLastProcessedBlock(137)
 
-      // Should have processed up to endBlock, ignoring finality depth
+      // Should have processed up to endBlock (historical blocks don't need finality protection)
       expect(lastBlock).toBe(77000100)
+    }, 60000)
+
+    it('should cap endBlock at current block if set too high', async () => {
+      // Test edge case: endBlock is set higher than current block
+      const currentBlock = await fetcher.provider.getBlockNumber()
+      const futureBlock = currentBlock + 1000000 // Way in the future
+
+      orchestrator = new IndexerOrchestrator(
+        {
+          chainId: 137,
+          startBlock: currentBlock - 100,
+          endBlock: futureBlock, // This should be capped at currentBlock
+          chunkSize: 10,
+          finalityDepth: 5,
+          pollInterval: 100,
+        },
+        fetcher,
+        storage
+      )
+
+      // Start and wait for completion
+      await orchestrator.start()
+
+      const lastBlock = await storage.getLastProcessedBlock(137)
+
+      // Since futureBlock is capped to currentBlock, and it's near the tip,
+      // finality depth should be applied: currentBlock - finalityDepth
+      expect(lastBlock).toBeLessThanOrEqual(currentBlock)
+      expect(lastBlock).toBeGreaterThanOrEqual(currentBlock - 10) // Within reasonable range
+    }, 60000)
+
+    it('should apply finality depth when endBlock is near chain tip', async () => {
+      // When endBlock is near the current block, finality depth should be applied
+      const currentBlock = await fetcher.provider.getBlockNumber()
+      const nearTipBlock = currentBlock - 10 // Very recent
+
+      orchestrator = new IndexerOrchestrator(
+        {
+          chainId: 137,
+          startBlock: nearTipBlock - 50,
+          endBlock: nearTipBlock,
+          chunkSize: 10,
+          finalityDepth: 50, // Should be applied since endBlock is near tip
+          pollInterval: 100,
+        },
+        fetcher,
+        storage
+      )
+
+      // Start and wait for completion
+      await orchestrator.start()
+
+      const lastBlock = await storage.getLastProcessedBlock(137)
+
+      // Should have processed up to currentBlock - finalityDepth (not endBlock)
+      expect(lastBlock).toBeLessThanOrEqual(currentBlock - 50)
     }, 60000)
   })
 

@@ -12,10 +12,15 @@ export function createApp(): Application {
   // Parse JSON request bodies
   app.use(express.json())
 
+  // Health check endpoint (for Docker healthcheck)
+  app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok' })
+  })
+
   // Mount routes
   app.use('/api', router)
 
-  // Error handling middleware (must be last)
+  // Error handling middleware
   app.use(errorHandler)
 
   return app

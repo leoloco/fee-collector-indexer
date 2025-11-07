@@ -152,13 +152,24 @@ function loadChainConfig(chainName: string): ChainConfig {
 }
 
 /**
- * Loads and validates configuration from environment variables and JSON files
- * Throws an error if required variables are missing or invalid
+ * Constructs MongoDB URI from individual components
+ * This ensures consistent configuration across all deployment modes (local, Docker, production)
  */
+function getMongoDbUri(): string {
+  const username = requireEnv('MONGO_ROOT_USERNAME')
+  const password = requireEnv('MONGO_ROOT_PASSWORD')
+  const host = process.env.MONGO_HOST || 'localhost'
+  const port = process.env.MONGO_PORT || '27017'
+  const database = process.env.MONGO_DATABASE || 'fee-collector'
+
+  // Construct MongoDB URI with authentication
+  return `mongodb://${username}:${password}@${host}:${port}/${database}?authSource=admin`
+}
+
 export function loadConfig(): Config {
   try {
-    // MongoDB configuration
-    const mongodbUri = requireEnv('MONGODB_URI')
+    // MongoDB configuration - construct from components
+    const mongodbUri = getMongoDbUri()
 
     // Enabled chains
     const enabledChainsStr = requireEnv('ENABLED_CHAINS')

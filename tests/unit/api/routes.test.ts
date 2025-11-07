@@ -21,6 +21,14 @@ describe('API Routes', () => {
     await clearTestDB()
   })
 
+  describe('GET /health', () => {
+    it('should return 200 OK with status', async () => {
+      const response = await request(app).get('/health').expect(200).expect('Content-Type', /json/)
+
+      expect(response.body).toEqual({ status: 'ok' })
+    })
+  })
+
   describe('GET /api/events', () => {
     const integrator1 = '0x1234567890123456789012345678901234567890'
     const integrator2 = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'
